@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="demo_2"  pkg="gemini_tutorials" type="demo_mainpulation_ar_tag.py" output="screen"/>
+</launch>

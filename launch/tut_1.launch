@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="demo_1"  pkg="gemini_tutorials" type="demo1.py" output="screen"/>
+</launch>
