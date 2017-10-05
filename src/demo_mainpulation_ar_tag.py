@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 
-import rospy, copy
+import rospy, copy, sys
 import std_msgs
 import vector_msgs
 import geometry_msgs.msg
@@ -17,24 +17,29 @@ def arPoseMarkerCallback(msg):
 		# marker Pose
 		marker_pose_stamped = msg.markers[0].pose
 		goal_pose = copy.deepcopy(marker_pose_stamped)
-		goal_pose.pose.position.x -= 0.20
-		goal_pose.pose.position.y += 0.20
+		goal_pose.pose.position.x -= 0. # 0.40
+		goal_pose.pose.position.y += 0. #0.50
+		goal_pose.pose.orientation.x = 0.545;
+		goal_pose.pose.orientation.y = -0.449;
+		goal_pose.pose.orientation.z = -0.530;
+		goal_pose.pose.orientation.w = -0.469;
 	else:
 		# Only for sim
-		goal_pose.pose.position.x = 0.798
-		goal_pose.pose.position.y = -0.115
-		goal_pose.pose.position.z = 0.205
-		goal_pose.pose.orientation.x = -0.025
-		goal_pose.pose.orientation.y = 0.730
-		goal_pose.pose.orientation.z = 0.064
-		goal_pose.pose.orientation.w = 0.680
+		# goal_pose.pose.position.x = 0.798
+		# goal_pose.pose.position.y = -0.115
+		# goal_pose.pose.position.z = 0.205
+		# goal_pose.pose.orientation.x = -0.025
+		# goal_pose.pose.orientation.y = 0.730
+		# goal_pose.pose.orientation.z = 0.064
+		# goal_pose.pose.orientation.w = 0.680
+		pass
 
 def add_collision_objects(arm):
 	### Table
 	table_pose = geometry_msgs.msg.PoseStamped()
 	table_pose.header.frame_id = "base_link"
 	# table_pose.pose.position.x = 0.6+0.8;
-	table_pose.pose.position.x = 1.25+.3; #distance + half width CHANGE THIS TO MATCH HOW FAR TABLE IS
+	table_pose.pose.position.x = 1.+.3; #distance + half width CHANGE THIS TO MATCH HOW FAR TABLE IS
 	table_pose.pose.position.y = 0;
 	table_pose.pose.position.z = .4; # half of height
 	table_pose.pose.orientation.x = 0;
@@ -68,7 +73,7 @@ def attach_collision_object(arm):
 	leg_pose.header.frame_id = "right_ee_link"
 	leg_pose.pose.position.x = 0 ## Need to Set these
 	leg_pose.pose.position.y = 0
-	leg_pose.pose.position.z = 0.15
+	leg_pose.pose.position.z = 0
 	leg_pose.pose.orientation.x = 0;
 	leg_pose.pose.orientation.y = 0;
 	leg_pose.pose.orientation.z = 0;
@@ -78,13 +83,27 @@ def attach_collision_object(arm):
 	arm.scene.attach_box("right_ee_link","leg",leg_pose,leg_scale)
 	return
 
+def remove_all_collision_objects(arm):
+    print "Removing collision Objects"
+    arm.scene.remove_world_object(name="table")
+    arm.scene.remove_attached_object("right_ee_link",name="leg")
+    arm.scene.remove_world_object(name="leg")
+    arm.scene.remove_world_object(name="floor")
+    rospy.sleep(3)
+
 
 def main():
 	tilt_publisher = rospy.Publisher('/tilt_controller/command', std_msgs.msg.Float64, queue_size=10)
 	arm = ArmMoveIt(planning_frame='linear_actuator_link', _arm_name='right')
-	gripper = Gripper()
+	gripper = Gripper(prefix='right')
 	rospy.Subscriber('/ar_pose_marker', AlvarMarkers, arPoseMarkerCallback)
 	rospy.sleep(1)
+
+	# Setup tilt controller
+	tilt_angle = std_msgs.msg.Float64()
+	tilt_angle.data = 0.5
+	tilt_publisher.publish(tilt_angle)
+	rospy.sleep(3)
 
 	# Setup collison Objects
 	raw_input('Adding collision objects. Press Enter!')
@@ -93,14 +112,20 @@ def main():
 	# Attach collision object as the leg
 	attach_collision_object(arm)
 
-	# Set goal point on the table using ar_tag
-	global goal_pose
-
 	# return to home pose
+	print "Setup"
 	raw_input('Returning to home pose. Press Enter!')
-	jointTarget = [1.689, 4.739, 0.118, 4.313, -0.148, 1.150, 3.340]
+	jointTarget = [1.387, 4.618, 6.534, 4.1195, 6.442, 1.138, 3.603]
 	arm.move_to_joint_pose(jointTarget)
 	rospy.sleep(3)
+
+	raw_input('Hand over leg and press Enter!')
+	gripper.close(100)
+	rospy.sleep(2)
+
+	# Set goal point on the table using ar_tag
+	global goal_pose
+	print "Goal POse =", goal_pose
 
 	# go to goal point
 	raw_input('Executing Arm trajectory command. Press Enter!')
@@ -110,21 +135,24 @@ def main():
 	rospy.sleep(3)
 
 	# drop the object
+	print "Going to drop-off pose"
 	tarPose = copy.deepcopy(goal_pose.pose)
-	tarPose.position.z += 0.04
+	tarPose.position.z += 0.07
 	arm.move_to_ee_pose(tarPose)
 	rospy.sleep(1)
 
 	# Open Gripper
+	raw_input('Dropping Object. Press Enter!')
 	gripper.open(100)
 	rospy.sleep(3)
 
 	# return to home pose
-	jointTarget = [1.689, 4.739, 0.118, 4.313, -0.148, 1.150, 3.340]
+	jointTarget = [1.387, 4.618, 6.534, 4.1195, 6.442, 1.138, 3.603]
 	arm.move_to_joint_pose(jointTarget)
 	rospy.sleep(3)
 
 	# Shutdown
+	remove_all_collision_objects(arm)
 	print "shutting down!"
 	# shut down moveit
 	moveit_commander.roscpp_shutdown()
