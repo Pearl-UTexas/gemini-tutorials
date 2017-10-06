@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="debug_kinesthetic"  pkg="gemini_tutorials" type="debug_kinesthetic.py" output="screen"/>
+</launch>

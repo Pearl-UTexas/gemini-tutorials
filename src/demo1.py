@@ -55,10 +55,12 @@ def main():
 	rospy.sleep(5)
 
 	#Move arm to a joint target
+	# print arm.group[0].get_joints()
 	raw_input('Executing Arm trajectory command. Press Enter!')
 	jointTarget = [1.689, 4.739, 0.118, 4.313, -0.148, 1.150, 3.340]
 	arm.move_to_joint_pose(jointTarget)
 	rospy.sleep(3)
+
 
 	#Open gripper
 	gripper.open(100)
