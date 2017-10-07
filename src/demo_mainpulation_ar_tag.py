@@ -95,7 +95,7 @@ def remove_all_collision_objects(arm):
 def main():
 	tilt_publisher = rospy.Publisher('/tilt_controller/command', std_msgs.msg.Float64, queue_size=10)
 	arm = ArmMoveIt(planning_frame='linear_actuator_link', _arm_name='right')
-	gripper = Gripper(prefix='right')
+	gripper = Gripper(prefix='left')
 	rospy.Subscriber('/ar_pose_marker', AlvarMarkers, arPoseMarkerCallback)
 	rospy.sleep(1)
 

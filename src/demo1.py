@@ -19,7 +19,7 @@ def main():
 	tilt_publisher = rospy.Publisher('/tilt_controller/command', std_msgs.msg.Float64, queue_size=10)
 	linear_actuator_publisher = rospy.Publisher('/vector/linear_actuator_cmd', vector_msgs.msg.LinearActuatorCmd, queue_size=10)
 	arm = ArmMoveIt(planning_frame='linear_actuator_link', _arm_name='right')
-	gripper = Gripper(prefix='right')
+	gripper = Gripper(prefix='left')
 
 	# Move Pan
 	raw_input('Executing Pan command. Press Enter!')
